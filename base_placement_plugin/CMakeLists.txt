@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 
+cmake_policy(SET CMP0048 NEW)
 project(base_placement_plugin)
 
 # Load catkin and all dependencies required for this package
@@ -20,16 +21,25 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
 )
 
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
-include(${QT_USE_FILE})
-
+if(rviz_QT_VERSION VERSION_LESS "5")
+  message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
+  find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
+  ## pull in all required include dirs, define QT_LIBRARIES, etc.
+  include(${QT_USE_FILE})
+else()
+  message(STATUS "Using Qt5 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
+  find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets Concurrent)
+  ## make target_link_libraries(${QT_LIBRARIES}) pull in all required dependencies
+  set(QT_LIBRARIES Qt5::Widgets Qt5::Concurrent)
+endif()
+find_package(HDF5 REQUIRED)
 
 add_definitions(-DQT_NO_KEYWORDS)
 
 
 add_library(create_marker  src/create_marker.cpp)
-target_link_libraries(create_marker  ${catkin_LIBRARIES} )
+target_link_libraries(create_marker ${QT_LIBRARIES} ${catkin_LIBRARIES} )
 
 set(base_placement_plugin_SRCS
   src/add_way_point.cpp
@@ -77,12 +87,17 @@ catkin_package(
   map_creator
 )
 
-qt4_wrap_cpp(base_placement_plugin_MOCS ${base_placement_plugin_HDRS} )
-qt4_wrap_ui(base_placement_plugin_UIS_H ${base_placement_plugin_UIS} )
+if(rviz_QT_VERSION VERSION_LESS "5")
+  qt4_wrap_cpp(base_placement_plugin_MOCS ${base_placement_plugin_HDRS} )
+  qt4_wrap_ui(base_placement_plugin_UIS_H ${base_placement_plugin_UIS} )
+else()
+  qt5_wrap_cpp(base_placement_plugin_MOCS ${base_placement_plugin_HDRS} )
+  qt5_wrap_ui(base_placement_plugin_UIS_H ${base_placement_plugin_UIS} )
+endif()
 
-include_directories(${base_placement_plugin_INCLUDE_DIRECTORIES} ${catkin_INCLUDE_DIRS})
+include_directories(${base_placement_plugin_INCLUDE_DIRECTORIES} ${catkin_INCLUDE_DIRS} ${HDF5_INCLUDE_DIRS})
 add_library(${PROJECT_NAME} ${base_placement_plugin_SRCS} ${base_placement_plugin_MOCS} ${base_placement_plugin_UIS_H}) # ${base_placement_plugin_UIS_H}
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY}  yaml-cpp -lhdf5 -lhdf5_cpp  create_marker)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_LIBRARIES} yaml-cpp ${HDF5_LIBRARIES} create_marker)
 ## target_link_libraries(${PROJECT_NAME} yaml-cpp)
 
 

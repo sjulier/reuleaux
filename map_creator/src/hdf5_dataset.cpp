@@ -70,7 +70,7 @@ bool Hdf5Dataset::open()
 
   this->attr_ = H5Aopen(this->sphere_dataset_, "Resolution", H5P_DEFAULT);
   herr_t ret = H5Aread(this->attr_, H5T_NATIVE_FLOAT, &this->res_);
-
+  return true;
 }
 
 bool Hdf5Dataset::open_cap()
@@ -88,7 +88,7 @@ bool Hdf5Dataset::open_cap()
 
   this->attr_ = H5Aopen(this->capability_dataset_, "Resolution", H5P_DEFAULT);
   herr_t ret = H5Aread(this->attr_, H5T_NATIVE_FLOAT, &this->res_);
-
+  return true;
 }
 
 void Hdf5Dataset::close()
@@ -116,6 +116,7 @@ bool Hdf5Dataset::checkPath(std::string path)
     ROS_INFO("Path does not exist yet");
     //return false;
   }
+  return true;
 }
 
 void Hdf5Dataset::createPath(std::string path)
@@ -137,6 +138,7 @@ bool Hdf5Dataset::checkFileName(std::string filename)
     ROS_ERROR("Please provide an extension of .h5 It will make life easy");
     exit(1);
   }
+  return true;
 }
 
 bool Hdf5Dataset::saveCapMapsToDataset(VectorOfVectors &capability_data, float &resolution)
@@ -248,7 +250,7 @@ bool Hdf5Dataset::saveReachMapsToDataset( MultiMapPtr& poses,  MapVecDoublePtr& 
   // Create Dataset Property list
   hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
   H5Pset_layout(plist, H5D_CHUNKED);
-  hsize_t chunk_dims[ndims] = {chunk_size, ncols};
+  hsize_t chunk_dims[ndims] = {hsize_t(chunk_size), ncols};
   H5Pset_chunk(plist, ndims, chunk_dims);
 
 
@@ -288,7 +290,7 @@ bool Hdf5Dataset::saveReachMapsToDataset( MultiMapPtr& poses,  MapVecDoublePtr& 
   // Selecting hyperslab on the dataset
   file_space = H5Dget_space(this->poses_dataset_);
   hsize_t start[2] = {0, 0};
-  hsize_t count[2] = {chunk_size, ncols};
+  hsize_t count[2] = {hsize_t(chunk_size), ncols};
   H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count, NULL);
 
   // Writing buffer to the dataset
@@ -376,6 +378,7 @@ bool Hdf5Dataset::saveReachMapsToDataset( MultiMapPtr& poses,  MapVecDoublePtr& 
   H5Sclose(file_space);
   H5Sclose(mem_space);
   close();
+  return true;
 }
 
 bool Hdf5Dataset::h5ToVectorCap(VectorOfVectors &capability_data)
@@ -458,6 +461,7 @@ bool Hdf5Dataset::h5ToMultiMapPoses(MultiMap& pose_col)
 {
   MapVecDouble sphere_col;
   h5ToMultiMapPoses(pose_col, sphere_col);
+  return true;
 }
 
 bool Hdf5Dataset::h5ToMultiMapPoses(MultiMap& pose_col, MapVecDouble& sphere_col)

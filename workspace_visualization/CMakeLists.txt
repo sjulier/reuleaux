@@ -11,6 +11,8 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 set(CMAKE_AUTOMOC ON)
 
+message(rviz_QT_VERSION=${rviz_QT_VERSION})
+
 if(rviz_QT_VERSION VERSION_LESS "5")
   message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
   find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
